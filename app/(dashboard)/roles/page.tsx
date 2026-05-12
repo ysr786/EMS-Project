@@ -10,7 +10,7 @@ export default async function RolesPage() {
 
   await connectDB();
   const users = await Admin.find().select("-password").sort({ createdAt: -1 }).lean();
-  const currentUserId = (session.user as any).id;
+  const currentUserId = (session?.user as any)?.id ?? "";
 
   return (
     <div className="space-y-6">
