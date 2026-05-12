@@ -1,4 +1,5 @@
-import NextAuth from "next-auth";
+import NextAuth, { type Session, type User } from "next-auth";
+import { type JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
@@ -14,7 +15,7 @@ const authConfig = {
       async authorize(credentials) {
         try {
           await connectDB();
-          const admin = await Admin.findOne({ email: credentials?.email }).lean<{ _id: any; name: string; email: string; password: string; role: string }>();
+          const admin = await Admin.findOne({ email: credentials?.email as string }).lean<{ _id: any; name: string; email: string; password: string; role: string }>();
           if (!admin) return null;
           const valid = await bcrypt.compare(credentials?.password as string, admin.password);
           if (!valid) return null;
@@ -27,14 +28,14 @@ const authConfig = {
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
       }
       return token;
     },
-    session({ session, token }) {
+    session({ session, token }: { session: Session; token: JWT }) {
       (session.user as any).id = token.id;
       (session.user as any).role = token.role;
       return session;
