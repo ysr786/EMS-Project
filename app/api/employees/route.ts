@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (![ "superadmin", "admin"].includes(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   await connectDB();
-  const { password, role, ...body } = await req.json();
+  const { password, role: employeeRole, ...body } = await req.json();
   const employee = await Employee.create(body);
 
   if (password?.trim()) {
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (!existing) {
       const hashed = await bcrypt.hash(password.trim(), 10);
       const ALLOWED = ["superadmin", "admin", "hr_manager", "employee"];
-      await Admin.create({ name: body.name, email: body.email, password: hashed, role: ALLOWED.includes(role) ? role : "employee", mustChangePassword: true });
+      await Admin.create({ name: body.name, email: body.email, password: hashed, role: ALLOWED.includes(employeeRole) ? employeeRole : "employee", mustChangePassword: true });
       await PendingRequest.deleteOne({ email: body.email });
     }
   }
