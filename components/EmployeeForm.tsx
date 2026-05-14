@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Department = { _id: string; name: string };
-type Employee = { _id?: string; name: string; email: string; phone?: string; position: string; department: string; status: string; joinDate: string; salary: number };
+type Employee = { _id?: string; name: string; email: string; phone?: string; position: string; department: string; role?: string; status: string; joinDate: string; salary: number };
 
 const inputClass = "w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all";
 
@@ -19,15 +19,18 @@ export default function EmployeeForm({ departments, employee }: { departments: D
     setLoading(true);
     setError("");
     const form = new FormData(e.currentTarget);
+    const positionName = form.get("position") as string;
+    const matchedDept = departments.find((d) => d.name === positionName);
     const data: any = {
       name: form.get("name"),
       email: form.get("email"),
       phone: form.get("phone"),
-      position: form.get("position"),
-      department: form.get("department"),
+      position: positionName,
+      department: matchedDept?._id || employee?.department,
       status: form.get("status"),
       joinDate: form.get("joinDate"),
       salary: Number(form.get("salary")),
+      role: form.get("role"),
     };
     if (isNew) {
       const pwd = (form.get("password") as string)?.trim();
@@ -65,11 +68,14 @@ export default function EmployeeForm({ departments, employee }: { departments: D
           <input name="phone" type="text" defaultValue={employee?.phone || ""}
             placeholder="+1 234 567 8900" className={inputClass} />
         </div>
-        {/* Position */}
+        {/* Position / Role - dropdown from departments */}
         <div>
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Position</label>
-          <input name="position" type="text" required defaultValue={employee?.position || ""}
-            placeholder="e.g. Software Engineer" className={inputClass} />
+          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Role</label>
+          <select name="position" required defaultValue={employee?.position || ""}
+            className={inputClass + " cursor-pointer"}>
+            <option value="">Select role</option>
+            {departments.map((d) => <option key={d._id} value={d.name}>{d.name}</option>)}
+          </select>
         </div>
         {/* Salary */}
         <div>
@@ -83,15 +89,26 @@ export default function EmployeeForm({ departments, employee }: { departments: D
           <input name="joinDate" type="date" required defaultValue={employee?.joinDate || ""}
             className={inputClass} />
         </div>
-        {/* Department */}
-        <div>
+        {/* Department - commented out, Role/Position dropdown used instead */}
+        {/* <div>
           <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Department</label>
           <select name="department" required defaultValue={employee?.department || ""}
             className={inputClass + " cursor-pointer"}>
             <option value="">Select department</option>
             {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
           </select>
-        </div>
+        </div> */}
+        {/* Role */}
+        {/* <div>
+          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Role</label>
+          <select name="role" defaultValue={employee?.role || "employee"}
+            className={inputClass + " cursor-pointer"}>
+            <option value="employee">Employee</option>
+            <option value="hr_manager">HR Manager</option>
+            <option value="admin">Admin</option>
+            <option value="superadmin">Superadmin</option>
+          </select>
+        </div> */}
         {/* Status */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">Status</label>

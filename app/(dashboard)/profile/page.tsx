@@ -9,7 +9,7 @@ export default async function ProfilePage() {
 
   await connectDB();
   const user = await Admin.findById(userId).select("-password").lean<{
-    _id: any; name: string; email: string; role: string; createdAt: Date;
+    _id: any; name: string; email: string; role: string; avatar?: string; createdAt: Date;
   }>();
 
   if (!user) return <p className="text-gray-500">User not found.</p>;
@@ -25,6 +25,7 @@ export default async function ProfilePage() {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatar: user.avatar || "",
         createdAt: user.createdAt.toISOString(),
       }} />
     </div>

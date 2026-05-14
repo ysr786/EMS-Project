@@ -36,18 +36,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
+  const role = (session?.user as any)?.role;
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (![ "superadmin", "admin"].includes(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   await connectDB();
-  const { password, ...body } = await req.json();
+  const { password, role, ...body } = await req.json();
   const employee = await Employee.create(body);
 
-  // if password provided, create Admin account immediately
   if (password?.trim()) {
     const existing = await Admin.findOne({ email: body.email });
     if (!existing) {
       const hashed = await bcrypt.hash(password.trim(), 10);
-      await Admin.create({ name: body.name, email: body.email, password: hashed, role: "employee" });
+      const ALLOWED = ["superadmin", "admin", "hr_manager", "employee"];
+      await Admin.create({ name: body.name, email: body.email, password: hashed, role: ALLOWED.includes(role) ? role : "employee", mustChangePassword: true });
       await PendingRequest.deleteOne({ email: body.email });
     }
   }

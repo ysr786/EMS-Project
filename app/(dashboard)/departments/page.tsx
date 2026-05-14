@@ -1,10 +1,14 @@
 import { connectDB } from "@/lib/db";
 import { Department } from "@/models/Department";
 import DepartmentManager from "@/components/DepartmentManager";
+import { auth } from "@/lib/auth";
 
 export default async function DepartmentsPage() {
   await connectDB();
   const departments = await Department.find().sort({ name: 1 }).lean();
+  const session = await auth();
+  const role = (session?.user as any)?.role;
+  const canWrite = ["superadmin", "admin"].includes(role);
 
   return (
     <div className="space-y-6">
@@ -21,7 +25,10 @@ export default async function DepartmentsPage() {
         </div>
       </div>
 
-      <DepartmentManager departments={departments.map((d: any) => ({ _id: d._id.toString(), name: d.name, description: d.description }))} />
+      <DepartmentManager
+        departments={departments.map((d: any) => ({ _id: d._id.toString(), name: d.name, description: d.description }))}
+        canWrite={canWrite}
+      />
     </div>
   );
 }

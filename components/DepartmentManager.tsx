@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const deptColors = ["bg-blue-500", "bg-purple-500", "bg-green-500", "bg-orange-500", "bg-pink-500", "bg-teal-500", "bg-indigo-500", "bg-red-500"];
 
-export default function DepartmentManager({ departments }: { departments: { _id: string; name: string; description?: string }[] }) {
+export default function DepartmentManager({ departments, canWrite = true }: { departments: { _id: string; name: string; description?: string }[]; canWrite?: boolean }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -39,8 +39,9 @@ export default function DepartmentManager({ departments }: { departments: { _id:
   function cancelEdit() { setEditId(null); setName(""); setDescription(""); }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Form */}
+    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6`}>
+      {/* Form - hidden for HR */}
+      {canWrite && (
       <div className="lg:col-span-1">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-6">
           <div className="flex items-center gap-3 mb-6">
@@ -93,9 +94,10 @@ export default function DepartmentManager({ departments }: { departments: { _id:
           </form>
         </div>
       </div>
+      )}
 
       {/* Department cards */}
-      <div className="lg:col-span-2">
+      <div className={canWrite ? "lg:col-span-2" : "lg:col-span-3"}>
         {departments.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-20 text-center">
             <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
@@ -118,18 +120,22 @@ export default function DepartmentManager({ departments }: { departments: { _id:
                       {initials}
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => startEdit(dept)}
-                        className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button onClick={() => handleDelete(dept._id)} disabled={deletingId === dept._id}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50">
-                        {deletingId === dept._id
-                          ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
-                          : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
-                      </button>
+                      {canWrite && (
+                        <button onClick={() => startEdit(dept)}
+                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                      )}
+                      {canWrite && (
+                        <button onClick={() => handleDelete(dept._id)} disabled={deletingId === dept._id}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50">
+                          {deletingId === dept._id
+                            ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                            : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <h4 className="font-semibold text-gray-900">{dept.name}</h4>

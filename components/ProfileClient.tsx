@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 
-type User = { id: string; name: string; email: string; role: string; createdAt: string };
+type User = { id: string; name: string; email: string; role: string; avatar?: string; createdAt: string };
 
 const roleMeta: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   superadmin: { label: "Superadmin", color: "text-purple-700", bg: "bg-purple-100", dot: "bg-purple-500" },
@@ -66,11 +66,33 @@ export default function ProfileClient({ user }: { user: User }) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [avatar, setAvatar] = useState(user.avatar || "");
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const meta = roleMeta[user.role] || roleMeta.employee;
   const gradient = avatarGradients[user.role] || avatarGradients.employee;
   const initials = user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   const memberSince = new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return setAvatarMsg({ type: "error", text: "Please select an image file." });
+    if (file.size > 2 * 1024 * 1024) return setAvatarMsg({ type: "error", text: "Image must be under 2MB." });
+
+    setAvatarLoading(true);
+    setAvatarMsg(null);
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const res = await fetch("/api/profile/avatar", { method: "POST", body: formData });
+    const data = await res.json();
+    setAvatarLoading(false);
+    if (!res.ok) return setAvatarMsg({ type: "error", text: data.error || "Upload failed" });
+    setAvatar(data.avatar);
+    setAvatarMsg({ type: "success", text: "Profile photo updated." });
+  }
 
   async function handleInfoSave(e: React.FormEvent) {
     e.preventDefault();
@@ -118,11 +140,27 @@ export default function ProfileClient({ user }: { user: User }) {
               <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white rounded-full" />
             </div>
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-bold mb-3 border-2 border-white/30">
-                {initials}
+              <div className="relative group mb-3">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white/30 bg-white/20 flex items-center justify-center">
+                  {avatar
+                    ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+                    : <span className="text-3xl font-bold">{initials}</span>}
+                </div>
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  disabled={avatarLoading}
+                  className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                  {avatarLoading
+                    ? <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                    : <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
               </div>
               <p className="text-lg font-bold">{name}</p>
               <p className="text-white/70 text-sm mt-0.5">{email}</p>
+              {avatarMsg && (
+                <p className={`text-xs mt-2 ${avatarMsg.type === "success" ? "text-green-300" : "text-red-300"}`}>{avatarMsg.text}</p>
+              )}
+              {/* <p className="text-white/50 text-xs mt-1">Click photo to change</p> */}
             </div>
           </div>
           <div className="p-5 space-y-3">

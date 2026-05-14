@@ -32,7 +32,8 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
   const departments = await Department.find().sort({ name: 1 }).lean();
   const session = await auth();
   const role = (session?.user as any)?.role;
-  const canManageAccounts = ["superadmin", "admin", "hr_manager"].includes(role);
+  const canWrite = ["superadmin", "admin"].includes(role);
+  const canManageAccounts = canWrite;
 
   // get emails that already have Admin accounts
   const employeeEmails = (employees as any[]).map((e) => e.email);
@@ -47,13 +48,15 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
           <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
           <p className="text-gray-500 text-sm mt-1">{total} total employee{total !== 1 ? "s" : ""}</p>
         </div>
-        <Link href="/employees/new"
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-150">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Employee
-        </Link>
+        {canWrite && (
+          <Link href="/employees/new"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-150">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Employee
+          </Link>
+        )}
       </div>
 
       {/* Filters */}
@@ -125,13 +128,15 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
-                      <Link href={`/employees/${emp._id}`}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                      </Link>
+                      {canWrite && (
+                        <Link href={`/employees/${emp._id}`}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium transition-colors">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </Link>
+                      )}
                       <Link href={`/employees/${emp._id}/salary`}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 text-xs font-medium transition-colors">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +144,7 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
                         </svg>
                         Salary
                       </Link>
-                      <DeleteButton id={emp._id.toString()} />
+                      {canWrite && <DeleteButton id={emp._id.toString()} />}
                     </div>
                   </td>
                 </tr>

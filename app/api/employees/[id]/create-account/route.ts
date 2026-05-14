@@ -35,6 +35,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     email: employee.email,
     password: hashed,
     role: "employee",
+    mustChangePassword: true,
   });
 
   // remove any stale pending request for this email

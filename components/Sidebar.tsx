@@ -22,10 +22,6 @@ const allNav = [
     icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
   },
   {
-    href: "/approvals", label: "Approvals", roles: ["superadmin", "admin"], badge: true,
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
-  },
-  {
     href: "/roles", label: "Role Management", roles: ["superadmin"],
     icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
   },
@@ -38,16 +34,16 @@ export default function Sidebar() {
   const currentUserId = (session?.user as any)?.id || "";
   const initials = session?.user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "A";
   const nav = allNav.filter((item) => item.roles.includes(role));
-  const [pendingCount, setPendingCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [avatar, setAvatar] = useState("");
 
   useEffect(() => {
-    if (!["superadmin", "admin"].includes(role)) return;
-    fetch("/api/approvals")
+    if (!currentUserId) return;
+    fetch("/api/profile")
       .then((r) => r.json())
-      .then((data) => setPendingCount(Array.isArray(data) ? data.filter((r: any) => r.status === "pending").length : 0))
+      .then((data) => { if (data.avatar) setAvatar(data.avatar); })
       .catch(() => {});
-  }, [role]);
+  }, [currentUserId]);
 
   useEffect(() => {
     const fetchUnread = () => {
@@ -88,8 +84,8 @@ export default function Sidebar() {
         <p className="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 mb-3">Main Menu</p>
         {nav.map(({ href, label, icon, badge }: any) => {
           const active = pathname === href || pathname.startsWith(href + "/");
-          const showBadge = (badge && pendingCount > 0 && href === "/approvals") || (href === "/messages" && unreadCount > 0);
-          const badgeCount = href === "/approvals" ? pendingCount : unreadCount;
+          const showBadge = href === "/messages" && unreadCount > 0;
+          const badgeCount = unreadCount;
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${
@@ -110,8 +106,10 @@ export default function Sidebar() {
       <div className="px-3 py-4 border-t border-gray-800 space-y-1">
         <Link href="/profile"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 transition-colors cursor-pointer">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {initials}
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {avatar
+              ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+              : initials}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{session?.user?.name || "Admin"}</p>
